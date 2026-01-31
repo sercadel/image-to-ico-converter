@@ -143,6 +143,16 @@ class MainWindow(QMainWindow):
         self.input_paths = []
         self.sizes = [512, 256, 128, 64, 48, 32, 24, 16]
 
+        self.center_on_screen()
+
+    def center_on_screen(self):
+        screen = QApplication.primaryScreen().geometry()
+        size = self.geometry()
+        self.move(
+            (screen.width() - size.width()) // 2,
+            (screen.height() - size.height()) // 2
+        )
+
     def browse_input(self):
         choice = QFileDialog.getExistingDirectory(self, "Seleccionar Directorio de Entrada") or QFileDialog.getOpenFileNames(self, "Seleccionar Archivos de Imagen", "", "Images (*.png *.bmp *.jpeg *.jpg)")[0]
         if isinstance(choice, str) and choice:  # Directory selected
@@ -221,8 +231,23 @@ class MainWindow(QMainWindow):
         self.start_btn.setEnabled(True)
         QMessageBox.information(self, "Completado", "Procesamiento finalizado.")
 
+# Función para obtener la ruta correcta tanto en desarrollo como en .exe
+def resource_path(relative_path):
+    """Obtiene la ruta absoluta del recurso, funciona en dev y en PyInstaller"""
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+
+    icon_path = resource_path("app_icon.ico")
+    app.setWindowIcon(QIcon(icon_path))
+
     window = MainWindow()
+    window.setWindowIcon(QIcon(icon_path))
     window.show()
     sys.exit(app.exec())
