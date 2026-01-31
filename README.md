@@ -2,6 +2,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python&logoColor=white)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Última versión](https://img.shields.io/github/v/release/sercadel/image-to-ico-converter?label=Version&color=blue)](https://github.com/sercadel/image-to-ico-converter/releases/latest)
+[![Ejecutable](https://img.shields.io/badge/Download-exe-brightgreen)](https://github.com/sercadel/image-to-ico-converter/releases/download/v1.0.0/ImageToICO-v1.0.0.exe)
 
 Aplicación con interfaz gráfica moderna (PyQt6) para convertir imágenes (PNG, JPG, JPEG, BMP) a formato **.ico** con múltiples tamaños, ideal para iconos de aplicaciones Windows.
 
