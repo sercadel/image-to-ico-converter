@@ -107,16 +107,46 @@ class MainWindow(QMainWindow):
         self.sizes = [512, 256, 128, 64, 48, 32, 24, 16]
 
     def browse_input(self):
-        pass  # To be implemented
+        choice = QFileDialog.getExistingDirectory(self, "Seleccionar Directorio de Entrada") or QFileDialog.getOpenFileNames(self, "Seleccionar Archivos de Imagen", "", "Images (*.png *.bmp *.jpeg *.jpg)")[0]
+        if isinstance(choice, str) and choice:  # Directory selected
+            valid_extensions = ('.png', '.bmp', '.jpeg', '.jpg')
+            self.input_paths = [os.path.join(choice, f) for f in os.listdir(choice) if f.lower().endswith(valid_extensions)]
+            self.input_field.setText(choice)
+            self.input_field.setToolTip("Directorio seleccionado")
+        elif isinstance(choice, list) and choice:  # Files selected
+            self.input_paths = choice
+            count = len(choice)
+            text = f"{count} imagen{'es' if count != 1 else ''} seleccionada{'s' if count != 1 else ''}"
+            self.input_field.setText(text)
+            self.input_field.setToolTip("\n".join(choice))
+        if not self.input_paths:
+            QMessageBox.warning(self, "Advertencia", "No se encontraron imágenes válidas.")
 
     def browse_output(self):
-        pass  # To be implemented
+        directory = QFileDialog.getExistingDirectory(self, "Seleccionar Directorio de Salida")
+        if directory:
+            self.output_field.setText(directory)
 
     def add_size(self):
-        pass  # To be implemented
+        size_text = self.sizes_combo.currentText().strip()
+        if size_text.isdigit():
+            size = int(size_text)
+            if size not in self.sizes:
+                self.sizes.append(size)
+                self.sizes.sort(reverse=True)
+                self.sizes_combo.addItem(size_text)
+                self.sizes_combo.setCurrentText("")
+            else:
+                QMessageBox.warning(self, "Advertencia", "El tamaño ya existe.")
+        else:
+            QMessageBox.warning(self, "Advertencia", "Ingrese un número válido.")
 
     def remove_size(self):
-        pass  # To be implemented
+        index = self.sizes_combo.currentIndex()
+        if index >= 0:
+            size = int(self.sizes_combo.currentText())
+            self.sizes.remove(size)
+            self.sizes_combo.removeItem(index)
 
     def start_processing(self):
         pass  # To be implemented
