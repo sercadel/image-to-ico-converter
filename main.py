@@ -30,7 +30,44 @@ class ImageProcessorThread(QThread):
         self.finished.emit()
 
     def process_image(self, input_path):
-        pass  # To be implemented
+        try:
+            base_name = os.path.splitext(os.path.basename(input_path))[0]
+            output_subdir = os.path.join(self.output_directory, base_name)
+
+            if not os.path.exists(output_subdir):
+                os.makedirs(output_subdir)
+
+            img = Image.open(input_path)
+
+            resized_images = []
+            for size in self.sizes:
+                resized_img = img.resize((size, size), Image.Resampling.LANCZOS)
+                output_png_path = os.path.join(output_subdir, f"{base_name}_{size}.png")
+                resized_img.save(output_png_path, "PNG")
+                self.log.emit(f"Generada PNG: {output_png_path}")
+                resized_images.append(resized_img)
+
+            if resized_images:
+                ico_path = os.path.join(output_subdir, f"{base_name}.ico")
+                resized_images[0].save(
+                    ico_path,
+                    format='ICO',
+                    append_images=resized_images[1:],
+                    sizes=[(size, size) for size in self.sizes]
+                )
+                self.log.emit(f"Generado ICO: {ico_path}")
+
+            if self.move_original:
+                original_output_path = os.path.join(output_subdir, os.path.basename(input_path))
+                shutil.move(input_path, original_output_path)
+                self.log.emit(f"Movida original: {original_output_path}")
+            else:
+                original_output_path = os.path.join(output_subdir, os.path.basename(input_path))
+                shutil.copy(input_path, original_output_path)
+                self.log.emit(f"Copiada original: {original_output_path}")
+
+        except Exception as e:
+            self.log.emit(f"Error al procesar {input_path}: {e}")
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -149,7 +186,30 @@ class MainWindow(QMainWindow):
             self.sizes_combo.removeItem(index)
 
     def start_processing(self):
-        pass  # To be implemented
+        if not self.input_paths:
+            QMessageBox.warning(self, "Advertencia", "Seleccione archivos o directorio de entrada.")
+            return
+
+        output_dir = self.output_field.text()
+        if not os.path.exists(output_dir):
+            try:
+                os.makedirs(output_dir)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Error al crear directorio de salida: {e}")
+                return
+        if not self.sizes:
+            QMessageBox.warning(self, "Advertencia", "Añada al menos un tamaño.")
+            return
+
+        self.progress_bar.setValue(0)
+        self.log_text.clear()
+        self.start_btn.setEnabled(False)
+
+        self.thread = ImageProcessorThread(self.input_paths, output_dir, self.sizes, self.move_checkbox.isChecked())
+        self.thread.progress.connect(self.update_progress)
+        self.thread.log.connect(self.update_log)
+        self.thread.finished.connect(self.processing_finished)
+        self.thread.start()
 
     def update_progress(self, value):
         self.progress_bar.setValue(value)
