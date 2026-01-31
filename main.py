@@ -72,7 +72,8 @@ class ImageProcessorThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("ImageToICO")
+        VERSION = "1.0.0"
+        self.setWindowTitle(f"ImageToICO v{VERSION} - Generador de iconos Windows")
         self.resize(800, 600)
 
         self.central_widget = QWidget()
@@ -200,6 +201,22 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Advertencia", "Seleccione archivos o directorio de entrada.")
             return
 
+        # Filtrado adicional para validar imágenes
+        valid_paths = []
+        for path in self.input_paths:
+            try:
+                with Image.open(path) as img:
+                    img.verify()  # Verifica sin cargar toda la imagen
+                valid_paths.append(path)
+            except Exception as e:
+                self.log_text.append(f"Archivo omitido (no válido): {os.path.basename(path)} - Error: {e}")
+
+        if not valid_paths:
+            QMessageBox.warning(self, "Error", "Ninguna imagen válida encontrada.")
+            return
+
+        self.input_paths = valid_paths
+
         output_dir = self.output_field.text()
         if not os.path.exists(output_dir):
             try:
@@ -235,8 +252,10 @@ class MainWindow(QMainWindow):
 def resource_path(relative_path):
     """Obtiene la ruta absoluta del recurso, funciona en dev y en PyInstaller"""
     try:
+        # PyInstaller crea una carpeta temporal y guarda la ruta en sys._MEIPASS
         base_path = sys._MEIPASS
     except AttributeError:
+        # En modo desarrollo (python main.qt6.py), usa el directorio actual
         base_path = os.path.abspath(".")
 
     return os.path.join(base_path, relative_path)
@@ -244,6 +263,7 @@ def resource_path(relative_path):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
+    # Carga el icono con la ruta segura
     icon_path = resource_path("app_icon.ico")
     app.setWindowIcon(QIcon(icon_path))
 
